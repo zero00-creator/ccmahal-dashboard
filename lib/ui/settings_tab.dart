@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../auth/auth_service.dart';
 import '../auth/validators.dart';
 import '../theme/tokens.dart';
+import '../update/update_controller.dart';
+import '../update/update_ui.dart';
 import 'glass.dart';
 
 /// The Settings tab: who is signed in, sign out, and for a Google account the
@@ -19,7 +21,11 @@ class SettingsTab extends StatefulWidget {
     this.appCmd = false,
     this.onAppCmdChanged,
     this.embedded = false,
+    this.updates,
   });
+
+  /// The in-app updater (Android only); null or unsupported hides its section.
+  final UpdateController? updates;
 
   /// Inside a collapsible panel: no title and the list takes only the height
   /// it needs.
@@ -180,6 +186,10 @@ class _SettingsTabState extends State<SettingsTab> {
             ),
           ),
         ),
+        if (widget.updates?.supported == true) ...[
+          const SizedBox(height: Space.x4),
+          UpdateSection(controller: widget.updates!, style: style),
+        ],
         const SizedBox(height: Space.x4),
         GlassPanel(
           style: style,

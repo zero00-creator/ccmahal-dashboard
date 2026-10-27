@@ -11,6 +11,8 @@ import 'firebase_options.dart';
 import 'models.dart';
 import 'paths.dart';
 import 'sprites.dart';
+import 'update/update_controller.dart';
+import 'update/update_service.dart';
 import 'ui/offline_notice.dart';
 import 'ui/live_view.dart';
 
@@ -52,11 +54,18 @@ class _LivePageState extends State<LivePage> {
   Timer? _tick;
   StreamSubscription<DatabaseEvent>? _offsetSub;
   SpriteSet? _sprites;
+  // The Android updater; on web and other platforms it is unsupported and hidden.
+  late final UpdateController _updates = UpdateController(
+    service: GithubUpdateService(),
+    supported: updatesSupported,
+    store: PrefsLastCheckStore(),
+  );
 
   @override
   void initState() {
     super.initState();
     _startWait();
+    _updates.checkAuto();
     SpriteSet.load().then((s) {
       if (mounted) setState(() => _sprites = s);
     });
@@ -88,6 +97,7 @@ class _LivePageState extends State<LivePage> {
     _wait?.cancel();
     _tick?.cancel();
     _offsetSub?.cancel();
+    _updates.dispose();
     super.dispose();
   }
 
@@ -179,6 +189,7 @@ class _LivePageState extends State<LivePage> {
       appCmd: appCmd,
       onSendCmd: _sendCmd,
       onAppCmdChanged: _setAppCmd,
+      updates: _updates,
     );
   }
 }

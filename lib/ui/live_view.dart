@@ -9,6 +9,8 @@ import '../office/office_view.dart';
 import '../session_order.dart';
 import '../sprites.dart';
 import '../theme/tokens.dart';
+import '../update/update_controller.dart';
+import '../update/update_ui.dart';
 import 'alerts_tab.dart';
 import 'ask_dialog.dart';
 import 'collapsible_panel.dart';
@@ -52,7 +54,11 @@ class LiveView extends StatefulWidget {
     this.appCmd = false,
     this.onSendCmd,
     this.onAppCmdChanged,
+    this.updates,
   });
+
+  /// The in-app updater; null (or unsupported) shows no banner and no section.
+  final UpdateController? updates;
 
   final List<SessionInfo> sessions;
   final int serverNow;
@@ -393,7 +399,14 @@ class _LiveViewState extends State<LiveView> {
       appCmd: widget.appCmd,
       onAppCmdChanged: widget.onAppCmdChanged,
       embedded: embedded,
+      updates: widget.updates,
     );
+
+    Widget updateBanner(VoidCallback onTap) {
+      final u = widget.updates;
+      if (u == null || !u.supported) return const SizedBox.shrink();
+      return UpdateBanner(controller: u, style: style, onTap: onTap);
+    }
 
     Widget office() {
       final l = live;
@@ -410,9 +423,16 @@ class _LiveViewState extends State<LiveView> {
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 520),
-                child: topCard(
-                  l,
-                  onMenu: () => _scaffold.currentState?.openDrawer(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    updateBanner(() => setState(() => _tab = 3)),
+                    topCard(
+                      l,
+                      onMenu: () => _scaffold.currentState?.openDrawer(),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -514,6 +534,7 @@ class _LiveViewState extends State<LiveView> {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                updateBanner(() => setState(() => _settingsOpen = true)),
                 StatsStrip(
                   session: l.session,
                   serverNow: widget.serverNow,
